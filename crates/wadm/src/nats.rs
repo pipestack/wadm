@@ -242,7 +242,7 @@ pub async fn ensure_event_consumer_stream(
     storage: StorageType,
 ) -> Result<Stream> {
     debug!("Ensuring stream {name} exists");
-    // This maps the upstream (wasmbus.evt.*.> & wadm.evt.*.>) Streams into
+    // This maps the upstream (mt.wasmbus.evt.*.> & wadm.evt.*.>) Streams into
     // a set of configuration for the downstream wadm event consumer Stream
     // that consolidates them into a single set of subjects (wadm_event_consumer.evt.*.>)
     // to be consumable by the wadm event consumer.
@@ -256,12 +256,12 @@ pub async fn ensure_event_consumer_stream(
                 .iter()
                 .map(|stream_subject| SubjectTransform {
                     source: stream_subject.to_owned(),
-                    destination: match stream_subject.starts_with('*') {
+                    destination: match stream_subject.starts_with("mt.*") {
                         // If we have a multi-tenant stream subject, we need to replace
                         // the second wildcard since the first one represents the account id,
                         // otherwise replace the first one:
                         //
-                        // multi-tenant:  <account-id>.<subject>.evt.<lattice-id>.<event-type>
+                        // multi-tenant:  mt.<account-id>.<subject>.evt.<lattice-id>.<event-type>
                         // single-tenant: <subject>.evt.<lattice-id>.<event-type>
                         true => subject.replacen('*', "{{wildcard(2)}}", 1),
                         false => subject.replacen('*', "{{wildcard(1)}}", 1),

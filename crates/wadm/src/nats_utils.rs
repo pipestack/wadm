@@ -28,7 +28,7 @@ impl LatticeIdParser {
         // For reference, topics look like the following:
         //
         // Normal: `{prefix}.evt.{lattice-id}.{event-type}`
-        // Multitenant: `{account-id}.{prefix}.evt.{lattice-id}.{event-type}`
+        // Multitenant: `mt.{account-id}.{prefix}.evt.{lattice-id}.{event-type}`
         //
         // Note that the account ID should be prefaced with an `A`
         match separated[..] {
@@ -41,7 +41,7 @@ impl LatticeIdParser {
                     prefix: self.prefix.clone(),
                 })
             }
-            [account_id, prefix, evt, lattice_id, _event_type]
+            ["mt", account_id, prefix, evt, lattice_id, _event_type]
                 if self.multitenant
                     && prefix == self.prefix
                     && evt == EVENT_SUBJECT
@@ -80,7 +80,7 @@ impl LatticeInformation {
         if let Some(account_id) = &self.multitenant_prefix {
             // e.g. Axxx.wasmbus.evt.{lattice-id}.*
             format!(
-                "{}.{}.{}.{}.*",
+                "mt.{}.{}.{}.{}.*",
                 account_id, self.prefix, EVENT_SUBJECT, self.lattice_id
             )
         } else {
@@ -120,7 +120,7 @@ mod test {
 
         // Shouldn't parse a multitenant
         assert!(
-            parser.parse("ACCOUNTID.wasmbus.evt.default.>").is_none(),
+            parser.parse("mt.ACCOUNTID.wasmbus.evt.default.>").is_none(),
             "Shouldn't parse a multitenant topic"
         );
 
@@ -137,7 +137,7 @@ mod test {
         );
 
         let res = parser
-            .parse("ACCOUNTID.wasmbus.evt.blahblah.>")
+            .parse("mt.ACCOUNTID.wasmbus.evt.blahblah.>")
             .expect("Should parse multitenant topic");
 
         assert_eq!(res.lattice_id(), "blahblah", "Should return the right ID");
@@ -149,7 +149,7 @@ mod test {
         );
         assert_eq!(
             res.event_subject(),
-            "ACCOUNTID.wasmbus.evt.blahblah.*",
+            "mt.ACCOUNTID.wasmbus.evt.blahblah.*",
             "Should return the right event subject"
         );
     }
@@ -160,32 +160,32 @@ mod test {
 
         // Test 3 and 4 part subjects to make sure they don't parse
         assert!(
-            parser.parse("BLAH.wasmbus.notevt.default.>").is_none(),
+            parser.parse("mt.BLAH.wasmbus.notevt.default.>").is_none(),
             "Shouldn't parse 4 part invalid topic"
         );
 
         assert!(
-            parser.parse("wasmbus.notme.default.>").is_none(),
+            parser.parse("mt.wasmbus.notme.default.>").is_none(),
             "Shouldn't parse 3 part invalid topic"
         );
 
         assert!(
-            parser.parse("lebus.evt.default.>").is_none(),
+            parser.parse("mt.lebus.evt.default.>").is_none(),
             "Shouldn't parse an non-matching prefix"
         );
 
         assert!(
-            parser.parse("wasmbus.evt.>").is_none(),
+            parser.parse("mt.wasmbus.evt.>").is_none(),
             "Shouldn't parse a too short topic"
         );
 
         assert!(
-            parser.parse("BADACCOUNT.wasmbus.evt.default.>").is_none(),
+            parser.parse("mt.BADACCOUNT.wasmbus.evt.default.>").is_none(),
             "Shouldn't parse invalid account topic"
         );
 
         assert!(
-            parser.parse("wasmbus.notme.default.bar.baz").is_none(),
+            parser.parse("mt.wasmbus.notme.default.bar.baz").is_none(),
             "Shouldn't parse long topic"
         );
     }

@@ -54,7 +54,7 @@ impl<P: Publisher> Server<P> {
         }
 
         let topic_prefix = if multitenant {
-            format!("mt.*.{prefix}")
+            format!("*.{prefix}")
         } else {
             prefix.clone()
         };
